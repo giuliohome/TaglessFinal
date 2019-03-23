@@ -13,8 +13,8 @@ type Cache =
 [<AbstractClass>] // in case you want default implementation
 type DataSource() = 
     abstract member getFromSource : string -> DataResult
-    abstract member storeToSoure : string -> unit // just to show more options
-    default this.storeToSoure _ = ()
+    abstract member storeToSource : string -> unit // just to show more options
+    default this.storeToSource _ = ()
 
 let requestData (cacheImpl:Cache) (dataSourceimpl:DataSource) (userName:UserName) = 
     match cacheImpl.getFromCache userName with
