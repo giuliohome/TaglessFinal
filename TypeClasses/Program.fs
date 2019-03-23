@@ -1,9 +1,6 @@
 ﻿open System
 
-open System
-
 type UserName = string
-
 type DataResult = DataResult of string
 
 type Cache =
@@ -16,10 +13,12 @@ type DataSource() =
     abstract member storeToSource : string -> unit // just to show more options
     default this.storeToSource _ = ()
 
-let requestData (cacheImpl:Cache) (dataSourceimpl:DataSource) (userName:UserName) = 
-    match cacheImpl.getFromCache userName with
+type Context = {cache: Cache; dataSource: DataSource }
+
+let requestData (context:Context) (userName:UserName) = 
+    match context.cache.getFromCache userName with
     | Some dataResult -> dataResult
-    | None -> dataSourceimpl.getFromSource userName
+    | None -> context.dataSource.getFromSource userName
 
 type Version = 
 | NotInCache
@@ -45,9 +44,14 @@ let dataSource = function
     { new DataSource() with
           member this.getFromSource _  = 
               raise (NotImplementedException())}
+
+let flip f a b = f b a
               
 [<EntryPoint>]
 let main argv =
-    printfn "%A" <| requestData (cache NotInCache) (dataSource NotInCache) "john" 
-    printfn "%A" <| requestData (cache InCache) (dataSource InCache) "john" 
+    let confWithCache cached = if cached then InCache else NotInCache
+    let context conf = { cache = cache conf; dataSource = dataSource conf }
+    let requestData' = flip requestData
+    confWithCache true |> context |> requestData' "john" |> printfn "%A"
+    confWithCache false |> context |> requestData' "john" |> printfn "%A"
     0 // return an integer exit code
