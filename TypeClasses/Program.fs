@@ -10,10 +10,13 @@ type Cache =
     abstract member getFromCache : string -> DataResult option
     abstract member storeCache : string -> unit
 
-type DataSource =
+[<AbstractClass>] // in case you want default implementation
+type DataSource() = 
     abstract member getFromSource : string -> DataResult
+    abstract member storeToSoure : string -> unit // just to show more options
+    default this.storeToSoure _ = ()
 
-let requestDate (cacheImpl:Cache) (dataSourceimpl:DataSource) (userName:UserName) = 
+let requestData (cacheImpl:Cache) (dataSourceimpl:DataSource) (userName:UserName) = 
     match cacheImpl.getFromCache userName with
     | Some dataResult -> dataResult
     | None -> dataSourceimpl.getFromSource userName
@@ -35,16 +38,16 @@ let cache = function
 
 let dataSource = function
 | NotInCache ->
-    { new DataSource with
+    { new DataSource() with
           member this.getFromSource user = 
               "source: " + user |> DataResult}
  | InCache -> 
-    { new DataSource with
+    { new DataSource() with
           member this.getFromSource _  = 
               raise (NotImplementedException())}
               
 [<EntryPoint>]
 let main argv =
-    printfn "%A" <| requestDate (cache NotInCache) (dataSource NotInCache) "john" 
-    printfn "%A" <| requestDate (cache InCache) (dataSource InCache) "john" 
+    printfn "%A" <| requestData (cache NotInCache) (dataSource NotInCache) "john" 
+    printfn "%A" <| requestData (cache InCache) (dataSource InCache) "john" 
     0 // return an integer exit code
