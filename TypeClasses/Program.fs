@@ -23,7 +23,7 @@ let CacheNotInCache =
         member this.getFromCache _ = None
         member this.storeCache _ = () }
 
-let DataSourceeNotInCache = 
+let DataSourceNotInCache = 
     { new DataSource with
           member this.getFromSource user = 
               "source: " + user |> DataResult}
@@ -34,13 +34,13 @@ let CacheInCache =
            "cache: " + user |> DataResult |> Some
         member this.storeCache _ = () }
 
-let DataSourceeInCache = 
+let DataSourceInCache = 
     { new DataSource with
           member this.getFromSource _  = 
               raise (NotImplementedException())}
               
 [<EntryPoint>]
 let main argv =
-    printfn "%A" <| requestDate CacheNotInCache DataSourceeNotInCache "john" 
-    printfn "%A" <| requestDate CacheInCache DataSourceeInCache "john" 
+    printfn "%A" <| requestDate CacheNotInCache DataSourceNotInCache "john" 
+    printfn "%A" <| requestDate CacheInCache DataSourceInCache "john" 
     0 // return an integer exit code
