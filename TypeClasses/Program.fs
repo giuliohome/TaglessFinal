@@ -19,10 +19,10 @@ type DataSource<'t>() =
 
 type Context<'t> = {cache: Cache<'t>; dataSource: DataSource<'t> }
 
-let requestData (context:Context<UserName>) (userName:UserName) = 
+let requestData (context:Context<UserName>) (userName:UserName) = monad {
     match context.cache.getFromCache userName with
-    | Some dataResult -> map ((+) "cache: ") dataResult
-    | None -> map ((+) "source: ") (context.dataSource.getFromSource userName)
+    | Some dataResult -> return! map ((+) "cache: ") dataResult
+    | None -> return! map ((+) "source: ") (context.dataSource.getFromSource userName) }
 
 type Version = 
 | NotInCache
@@ -35,15 +35,15 @@ let cache = function
         member this.storeCache _ = () }
  | InCache -> 
     { new Cache<'t> with
-        member this.getFromCache user = 
-           DataResult user |> Some
+        member this.getFromCache user = monad { 
+           return! DataResult user |> Some}
         member this.storeCache _ = () }
 
 let dataSource = function
 | NotInCache ->
     { new DataSource<'t>() with
-          member this.getFromSource user = 
-               DataResult user }
+          member this.getFromSource user = monad { 
+               return! DataResult user } }
  | InCache -> 
     { new DataSource<'t>() with
           member this.getFromSource _  = 
