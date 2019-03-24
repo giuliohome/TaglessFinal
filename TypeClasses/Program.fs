@@ -1,24 +1,28 @@
 ﻿open System
+open FSharpPlus
 
 type UserName = string
-type DataResult = DataResult of string
+type DataResult<'t> = DataResult of 't with
+    static member Map ( x:DataResult<'t>  , f) =
+        match x with 
+        | DataResult t -> DataResult (f t)
 
-type Cache =
-    abstract member getFromCache : string -> DataResult option
-    abstract member storeCache : string -> unit
+type Cache<'t> =
+    abstract member getFromCache : 't -> DataResult<'t> option
+    abstract member storeCache : 't -> unit
 
 [<AbstractClass>] // in case you want default implementation
-type DataSource() = 
-    abstract member getFromSource : string -> DataResult
-    abstract member storeToSource : string -> unit // just to show more options
+type DataSource<'t>() = 
+    abstract member getFromSource : 't -> DataResult<'t>
+    abstract member storeToSource : 't -> unit // just to show more options
     default this.storeToSource _ = ()
 
-type Context = {cache: Cache; dataSource: DataSource }
+type Context<'t> = {cache: Cache<'t>; dataSource: DataSource<'t> }
 
-let requestData (context:Context) (userName:UserName) = 
+let requestData (context:Context<UserName>) (userName:UserName) = 
     match context.cache.getFromCache userName with
-    | Some dataResult -> dataResult
-    | None -> context.dataSource.getFromSource userName
+    | Some dataResult -> map ((+) "cache: ") dataResult
+    | None -> map ((+) "source: ") (context.dataSource.getFromSource userName)
 
 type Version = 
 | NotInCache
@@ -26,26 +30,24 @@ type Version =
 
 let cache = function
 | NotInCache ->
-    { new Cache with
+    { new Cache<'t> with
         member this.getFromCache _ = None
         member this.storeCache _ = () }
  | InCache -> 
-    { new Cache with
+    { new Cache<'t> with
         member this.getFromCache user = 
-           "cache: " + user |> DataResult |> Some
+           DataResult user |> Some
         member this.storeCache _ = () }
 
 let dataSource = function
 | NotInCache ->
-    { new DataSource() with
+    { new DataSource<'t>() with
           member this.getFromSource user = 
-              "source: " + user |> DataResult}
+               DataResult user }
  | InCache -> 
-    { new DataSource() with
+    { new DataSource<'t>() with
           member this.getFromSource _  = 
               raise (NotImplementedException())}
-
-let flip f a b = f b a
               
 [<EntryPoint>]
 let main argv =
