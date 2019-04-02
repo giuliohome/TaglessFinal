@@ -7,18 +7,19 @@ type DataResult<'t> = DataResult of 't with
 
 
 
-type Cache() = 
+type Cache = 
     static member inline getOfCache cacheImpl data =
         ( ^T : (member getFromCache : 't -> DataResult<'t> option) (cacheImpl, data))
     static member inline storeOfCache cacheImpl data =
         ( ^T : (member storeToCache : 't -> unit) (cacheImpl, data))
 
-type DataSource() =
+type DataSource =
     static member inline getOfSource dataSourceImpl data =
         ( ^T : (member getFromSource : 't -> DataResult<'t>) (dataSourceImpl, data))
     static member inline storeOfSource dataSourceImpl data =
         ( ^T : (member storeToSource : 't -> unit) (dataSourceImpl, data))
 
+// https://stackoverflow.com/a/55484235 thanks @gusty
 let inline requestData (cacheImpl: ^Cache) (dataSourceImpl: ^DataSource) (userName:UserName) = monad {
     match Cache.getOfCache cacheImpl userName with
     | Some dataResult -> 
@@ -53,4 +54,5 @@ type DataSourceImpl (v:Version) =
 let main argv =
     requestData (CacheImpl InCache) (DataSourceImpl InCache) "john" |> printfn "%A"
     requestData (CacheImpl NotInCache) (DataSourceImpl NotInCache) "john" |> printfn "%A"
+    Console.ReadKey() |> ignore
     0 
